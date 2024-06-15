@@ -1,0 +1,120 @@
+---
+title: "ANA 515 Assignment 2"
+author: "Vignesh Raja Nallendran"
+date: "2024-06-15"
+output: 
+   html_document:
+          theme:
+              bootswatch: sketchy 
+---
+
+``` {r, echo = TRUE}
+
+```
+
+The data set presented in this report is a collection of radio data from 2014. It contains a week's worth of songs played across 25 radio stations that play rock music. This data was collected to answer an analysis on what categorizes a song as classic rock because over time the definition has changed, we hope to achieve this analysis by computing the frequency of songs played by rock bands from the 1960s to early 2000s which is considered the tail end of the rock era. The data set is stored as a CSV file, delimited by a comma. 
+
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+
+```
+
+```{r, include = TRUE}
+
+cr_path<- "C:/Users/atl-vigneshn/Desktop/mcdaniel/ANA515/classic-rock-raw-data.csv"
+cr<-read.csv(cr_path)
+
+#cleaning, time column is numeric and according to the raw data this is in numeric format and python measures time as seconds since January 1,1970 adding the seconds would give us the required datetime
+cr$date<-as.POSIXct("1970-01-01 00:00:00", format = "%Y-%m-%d %H:%M:%S")
+STAT_TIME<-as.POSIXct("1970-01-01 00:00:00", format = "%Y-%m-%d %H:%M:%S")
+cr$newdate<-NA
+cr$newdate <- cr$date+ cr$TIME #new date is the column we need
+cr_new<- cr[c("Song.Clean","ARTIST.CLEAN","CALLSIGN","COMBINED","newdate","First.","UNIQUE_ID")]
+cr_new$count <- 1
+
+#GROUP raw data to get required analysis
+group_cr<-cr_new %>% group_by(ARTIST.CLEAN,Song.Clean) %>% summarise(times_song_played = sum(count),First_Played = min(newdate), Last_Played = max(newdate))
+
+#change column name
+colnames(group_cr)<- c('Artist','Song','Frequency','First Played','Last Played')
+#after cleaning and grouping the required data is final_df/group_cr
+#we will be using group_cr for the reminder of our summary and descriptive analysis
+final_df<-group_cr 
+summary<-summary(group_cr[c("First Played","Frequency","Last Played")])
+ncol<-ncol(group_cr) #number of columns
+nrow<-nrow(group_cr) #number of rows
+
+```
+
+```{r, echo = FALSE}
+#Inline Code
+```
+
+This dataframe has `r nrow` rows and `r ncol` columns. The names of the columns and a brief description of each are in the table below:
+
+``` {r, include = TRUE}
+#This next code chunk is to make a description table explaining the columns in our final data
+col_name<- c('Artist','Song','Frequency','First Played','Last Played')
+desc_col<- c('Name of the Artist', 'Name of the Song played', 'The number of times the song was played', 'The First time the song was played during the sampling process', 'The Last time the song was played during the sampling process')
+desc<-data.frame(col_name,desc_col)
+colnames(desc)<-c('Column Name','Column Description')
+
+desc %>%
+  kbl(caption = "Dataset Description", bold = T) %>%
+  kable_paper(c("striped", "hover"),full_width = F) %>%
+  row_spec(0,bold = T, color = "white", background = "black",align = 'c') %>%
+  column_spec(1, bold = T)
+
+
+
+
+
+
+
+
+  
+
+```
+
+
+``` {r, echo = FALSE, comment = NA}
+
+
+```
+
+As shown in the code above, the summary of columns Frequency, First Played, and Last Played are stored in the summary variable. Attached below is the summary elements presented in a table format, note since we used the "sum(is.na())" function to check the null values for the three columns and there are no null values we will ouput the null count as NA in the summary table below
+
+
+``` {r, include = TRUE}
+
+# creating our own summary table
+sum_name<- c('Max Value','Min Value','Mean Value','Null count')
+freq_values<-c(max(group_cr$Frequency),min(group_cr$`Frequency`),mean(group_cr$`Frequency`),NA)
+fp_values<-c(max(group_cr$`First Played`),min(group_cr$`First Played`),mean(group_cr$`First Played`),NA)
+lp_values<-c(max(group_cr$`Last Played`),min(group_cr$`Last Played`),mean(group_cr$`Last Played`),NA)
+
+LP_NULL_VALUES<-sum(is.na(group_cr$`Last Played`)) # number of missing values for last played
+FP_NULL_VALUES<-sum(is.na(group_cr$`First Played`)) # number of missing values for first played
+
+summary_table<-data.frame(sum_name,freq_values,fp_values,lp_values) # created summary table
+colnames(summary_table)<-c('Parameter','Frequency','First Played','Last Played')
+
+#Outputing in presentable format
+summary_table %>%
+  kbl(caption = "Dataset Summary", bold = T) %>%
+  kable_paper(c("striped", "hover"),full_width = F) %>%
+  row_spec(0,bold = T, color = "white", background = "black",align = 'c') %>%
+  column_spec(1, bold = T)
+
+```
+
+
+```{r, echo = FALSE}
+#Once all of my code has been written, I click on the Knit button in the tool bar above to produce my document.
+```
+
